@@ -7,7 +7,7 @@ import LearningPlatform from './components/LearningPlatform';
 import MnemonicGenerator from './pages/MnemonicGenerator';
 import StoryLearning from './pages/StoryLearning';
 import Flashcards from './pages/Flashcards';
-import VisualAids from './pages/VisualAids';
+import VisualDiagramGenerator from './pages/VisualDiagramGenerator';
 import Summarization from './pages/Summarization';
 import Gamification from './pages/Gamification';
 import Profile from './pages/Profile';
@@ -100,7 +100,7 @@ const App = () => {
                 exit="exit"
                 variants={pageTransition}
               >
-                <VisualAids />
+                <VisualDiagramGenerator />
               </motion.div>
             } 
           />
