@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowLeft, Trophy, Timer, Star, 
-  Book, Shield, Target, Zap,
-  CheckCircle, XCircle, Award
+import {
+  ArrowLeft, Trophy, Timer, Star,
+  Award, Target, CheckCircle, XCircle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import config from './config';
+
 const Gamification = () => {
   const navigate = useNavigate();
   const [gameMode, setGameMode] = useState(null);
@@ -21,12 +21,11 @@ const Gamification = () => {
   const [maxStreak, setMaxStreak] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [timerActive, setTimerActive] = useState(false);
-
-  // State to store AI-generated questions
   const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(false); // Loader state
 
-  // Fetch MCQs from the backend
   const generateQuestions = async (text) => {
+    setLoading(true);
     try {
       const response = await fetch(`${config.baseUrl}/generate-mcqs`, {
         method: 'POST',
@@ -36,47 +35,32 @@ const Gamification = () => {
         body: JSON.stringify({ input_text: text }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate questions');
-      }
+      if (!response.ok) throw new Error('Failed to generate questions');
 
       const data = await response.json();
-      console.log("Received MCQs from backend:", data.mcqs); // Debug log
-      
-      const formattedQuestions = data.mcqs.map((mcq, index) => {
-        // Get the correct answer letter directly from the API response
-        // The correct answer comes as the full letter like "B"
+      const formattedQuestions = data.mcqs.map((mcq) => {
         const correctLetter = mcq.correct_answer.trim();
-        
-        // Convert the letter to index (A=0, B=1, C=2, D=3)
-        let correctIndex;
-        if (correctLetter === "A") correctIndex = 0;
-        else if (correctLetter === "B") correctIndex = 1;
-        else if (correctLetter === "C") correctIndex = 2;
-        else if (correctLetter === "D") correctIndex = 3;
-        else correctIndex = 0; // Default to first option if we can't parse it
-        
-        console.log(`Question ${index+1}: Correct answer "${mcq.correct_answer}" -> index ${correctIndex}`);
-        
+        const correctIndex = { A: 0, B: 1, C: 2, D: 3 }[correctLetter] ?? 0;
+
         return {
           question: mcq.question,
-          options: mcq.options.map(opt => opt.trim()), // Keep the full option text including the letter
+          options: mcq.options.map(opt => opt.trim()),
           correct: correctIndex,
           points: 10,
-          difficulty: "medium"
+          difficulty: "medium",
         };
       });
 
-      console.log("Formatted questions:", formattedQuestions);
       setQuestions(formattedQuestions);
       return formattedQuestions;
     } catch (error) {
       console.error("Error generating questions:", error);
       return [];
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Properly reset game state
   const resetGame = () => {
     setGameStarted(false);
     setShowResults(false);
@@ -87,73 +71,60 @@ const Gamification = () => {
     setMaxStreak(0);
     setSelectedAnswer(null);
     setTimerActive(false);
+    setQuestions([]);
   };
 
-  // Start the game
   const startGame = async () => {
-    resetGame(); // Ensure clean state before starting
-    
+    resetGame();
     if (inputText) {
       const generatedQuestions = await generateQuestions(inputText);
       if (generatedQuestions.length > 0) {
         setGameStarted(true);
-        setTimerActive(true); // Activate the timer after questions are ready
+        setTimerActive(true);
       }
     }
   };
 
-  // Handle user's answer selection
   const handleAnswer = (answerIndex) => {
-    if (selectedAnswer !== null) return; // Prevent multiple selections
-    
-    setSelectedAnswer(answerIndex);
+    if (selectedAnswer !== null) return;
 
-    // Debug to check if we're correctly identifying the answer
-    console.log(`User selected: ${answerIndex}, Correct answer: ${questions[currentQuestion].correct}`);
-    
+    setSelectedAnswer(answerIndex);
     const correct = answerIndex === questions[currentQuestion].correct;
-    
+
     if (correct) {
       setScore(prev => prev + questions[currentQuestion].points);
       setStreakCount(prev => prev + 1);
-      setMaxStreak(prev => Math.max(prev, streakCount + 1)); // Update max streak
+      setMaxStreak(prev => Math.max(prev, streakCount + 1));
     } else {
       setStreakCount(0);
     }
 
-    // Pause the timer while showing the answer result
     setTimerActive(false);
-
     setTimeout(() => {
       if (currentQuestion < questions.length - 1) {
         setCurrentQuestion(prev => prev + 1);
         setSelectedAnswer(null);
-        setTimer(30); // Reset timer for the next question
-        setTimerActive(true); // Reactivate timer for next question
+        setTimer(30);
+        setTimerActive(true);
       } else {
         setShowResults(true);
       }
-    }, 1500); // Increased to give more time to see the correct answer
+    }, 1500);
   };
 
-  // Move to next question when timer runs out
   const handleTimerEnd = () => {
-    if (selectedAnswer === null) {
-      setStreakCount(0); // Break streak for timeout
-    }
-
+    if (selectedAnswer === null) setStreakCount(0);
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion(prev => prev + 1);
       setSelectedAnswer(null);
-      setTimer(30); // Reset timer
-      setTimerActive(true); // Keep timer active
+      setTimer(30);
+      setTimerActive(true);
     } else {
-      setShowResults(true); // End game if no more questions
+      setShowResults(true);
       setTimerActive(false);
     }
   };
 
-  // Timer logic
   useEffect(() => {
     if (gameStarted && timerActive && !showResults && timer > 0) {
       const interval = setInterval(() => {
@@ -161,36 +132,22 @@ const Gamification = () => {
       }, 1000);
       return () => clearInterval(interval);
     } else if (timer === 0 && timerActive) {
-      setTimerActive(false); // Disable timer
-      handleTimerEnd(); // Process timeout
+      setTimerActive(false);
+      handleTimerEnd();
     }
   }, [gameStarted, showResults, timer, timerActive, currentQuestion]);
 
-  // Cleanup effect when component unmounts
   useEffect(() => {
-    return () => {
-      // Cleanup logic here
-      resetGame();
-    };
+    return () => resetGame();
   }, []);
-
-  // Debug: Log the current question and its correct answer
-  useEffect(() => {
-    if (questions.length > 0 && currentQuestion < questions.length) {
-      console.log(`Current question: ${currentQuestion + 1}`);
-      console.log(`Question: ${questions[currentQuestion].question}`);
-      console.log(`Correct answer index: ${questions[currentQuestion].correct}`);
-    }
-  }, [questions, currentQuestion]);
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       <div className="container mx-auto px-4 py-8">
-        {/* Header Section */}
         <div className="flex items-center gap-4 mb-8">
-          <button 
+          <button
             onClick={() => navigate(-1)}
             className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg"
           >
@@ -200,7 +157,6 @@ const Gamification = () => {
         </div>
 
         {!gameMode ? (
-          // Game Selection Screen
           <div className="grid md:grid-cols-3 gap-6">
             <motion.div
               whileHover={{ scale: 1.02 }}
@@ -217,8 +173,7 @@ const Gamification = () => {
             </motion.div>
           </div>
         ) : !gameStarted ? (
-          // Text Input Screen
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="max-w-2xl mx-auto"
@@ -235,13 +190,19 @@ const Gamification = () => {
                 onClick={startGame}
                 className="w-full mt-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
-                Start Game
+                {loading ? (
+                  <div className="flex justify-center items-center gap-2">
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Generating...
+                  </div>
+                ) : (
+                  "Start Game"
+                )}
               </button>
             </div>
           </motion.div>
         ) : showResults ? (
-          // Results Screen
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             className="max-w-2xl mx-auto"
@@ -257,7 +218,9 @@ const Gamification = () => {
                 </div>
                 <div className="bg-blue-50 p-4 rounded-lg">
                   <Star className="text-blue-600 mx-auto mb-2" size={24} />
-                  <p className="text-sm text-blue-600">Accuracy: {questions.length > 0 ? Math.round((score / (questions.length * 10)) * 100) : 0}%</p>
+                  <p className="text-sm text-blue-600">
+                    Accuracy: {questions.length > 0 ? Math.round((score / (questions.length * 10)) * 100) : 0}%
+                  </p>
                 </div>
               </div>
               <div className="flex gap-4 justify-center">
@@ -283,15 +246,13 @@ const Gamification = () => {
             </div>
           </motion.div>
         ) : (
-          // Game Screen
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             className="max-w-2xl mx-auto"
           >
             {questions.length > 0 && currentQuestion < questions.length ? (
               <div className="bg-white rounded-xl shadow-lg p-6">
-                {/* Progress and Score */}
                 <div className="flex justify-between items-center mb-6">
                   <div className="flex items-center gap-2">
                     <Trophy size={20} className="text-blue-600" />
@@ -302,8 +263,6 @@ const Gamification = () => {
                     <span className={`font-semibold ${timer < 10 ? 'text-red-600' : 'text-blue-800'}`}>{timer}s</span>
                   </div>
                 </div>
-
-                {/* Question */}
                 <div className="mb-6">
                   <h3 className="text-sm text-blue-600 mb-2">
                     Question {currentQuestion + 1} of {questions.length}
@@ -312,8 +271,6 @@ const Gamification = () => {
                     {questions[currentQuestion].question}
                   </p>
                 </div>
-
-                {/* Options */}
                 <div className="space-y-4">
                   {questions[currentQuestion].options.map((option, index) => (
                     <motion.button
@@ -322,15 +279,15 @@ const Gamification = () => {
                       onClick={() => handleAnswer(index)}
                       disabled={selectedAnswer !== null}
                       className={`w-full p-4 rounded-lg text-left transition-colors ${
-                        selectedAnswer === null 
-                          ? 'bg-blue-50 hover:bg-blue-100 text-blue-800' 
+                        selectedAnswer === null
+                          ? 'bg-blue-50 hover:bg-blue-100 text-blue-800'
                           : selectedAnswer === index
-                            ? index === questions[currentQuestion].correct
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                            : index === questions[currentQuestion].correct
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-blue-50 text-blue-800'
+                          ? index === questions[currentQuestion].correct
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                          : index === questions[currentQuestion].correct
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-blue-50 text-blue-800'
                       }`}
                     >
                       <div className="flex items-center justify-between">

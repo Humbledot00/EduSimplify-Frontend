@@ -10,11 +10,13 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setLoading(true);
 
     try {
       const url = isLogin ? `${config.baseUrl}/login` : `${config.baseUrl}/register`;
@@ -45,6 +47,8 @@ const LoginPage = () => {
   }
     } catch (err) {
       setError(err.response?.data?.error || "An error occurred");
+    }finally {
+      setLoading(false);
     }
   };
 
@@ -116,10 +120,18 @@ const LoginPage = () => {
 
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center"
+            disabled={loading} // 👈 disable when loading
+            className={`w-full bg-blue-600 text-white py-3 rounded-lg transition-colors flex items-center justify-center 
+              ${loading ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
           >
-            <span>{isLogin ? 'Login' : 'Sign Up'}</span>
-            <ArrowRight className="ml-2" size={18} />
+            {loading ? (
+              <div className="loader border-t-2 border-white w-5 h-5 rounded-full animate-spin"></div>
+            ) : (
+              <>
+                <span>{isLogin ? 'Login' : 'Sign Up'}</span>
+                <ArrowRight className="ml-2" size={18} />
+              </>
+            )}
           </button>
         </form>
 
@@ -135,7 +147,21 @@ const LoginPage = () => {
           </p>
         </div>
       </motion.div>
+      <style>{`
+        .loader {
+          border: 2px solid transparent;
+          border-top-color: white;
+          border-radius: 50%;
+          width: 20px;
+          height: 20px;
+          animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
+    
   );
 };
 

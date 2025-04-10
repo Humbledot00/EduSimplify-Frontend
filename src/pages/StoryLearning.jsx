@@ -8,8 +8,10 @@ const StoryLearning = () => {
     "Welcome to Story-Based Learning! This tool transforms complex concepts into memorable stories."
   );
   const [inputText, setInputText] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleGenerate = async (input) => {
+    setLoading(true);
     if (!input) {
       setGeneratedContent("Please enter a concept or topic to generate a story.");
       return;
@@ -42,6 +44,8 @@ const StoryLearning = () => {
     } catch (error) {
       console.error('Error:', error);
       setGeneratedContent('**Error:** An error occurred while generating the story. Please try again.');
+    }finally {
+      setLoading(false); // 👈 End loading
     }
   };
 

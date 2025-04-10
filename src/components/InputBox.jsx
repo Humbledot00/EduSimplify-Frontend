@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 
-const InputBox = ({ onGenerate }) => {
+const InputBox = ({ onGenerate, loading }) => {
   const [input, setInput] = useState('');
 
   const handleSubmit = () => {
-    onGenerate(input);
-    setInput('');
+    if (!input.trim() || loading) return;
+    onGenerate(input); // Pass input to parent
+    setInput(''); // Clear local input
   };
 
   return (
@@ -23,15 +24,39 @@ const InputBox = ({ onGenerate }) => {
           onChange={(e) => setInput(e.target.value)}
           placeholder="Enter your text here..."
           className="flex-1 p-3 border-2 border-blue-200 rounded-lg focus:border-blue-500 focus:outline-none"
+          disabled={loading}
         />
         <button
           onClick={handleSubmit}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors
-                   shadow-md hover:shadow-lg active:scale-95 transform duration-100"
+          disabled={loading}
+          className={`px-6 py-3 rounded-lg transition-colors shadow-md flex items-center justify-center
+            ${loading 
+              ? 'bg-blue-400 cursor-not-allowed' 
+              : 'bg-blue-600 hover:bg-blue-700 active:scale-95 transform duration-100 text-white'
+            }`}
         >
-          Generate
+          {loading ? (
+            <div className="loader border-t-2 border-white w-8 h-8 rounded-full animate-spin"></div>
+          ) : (
+            'Generate'
+          )}
         </button>
       </div>
+
+      {/* Spinner style */}
+      <style>{`
+        .loader {
+          border: 2px solid transparent;
+          border-top-color: white;
+          border-radius: 50%;
+          width: 30px;  /* Adjusted size */
+          height: 30px; /* Adjusted size */
+          animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </motion.div>
   );
 };

@@ -3,14 +3,16 @@ import Header from '../components/Header';
 import Hero from '../components/Hero';
 import InputBox from '../components/InputBox';
 import config from './config';
+
 const MnemonicGenerator = () => {
   const [generatedContent, setGeneratedContent] = useState("");
   const [mnemonic, setMnemonic] = useState("");
   const [inputText, setInputText] = useState("");
+  const [loading, setLoading] = useState(false); // 👈 new loading state
 
   const handleGenerate = async (input) => {
+    setLoading(true); // 👈 Start loading
     try {
-      // Send a POST request to the Flask backend
       const response = await fetch(`${config.baseUrl}/generate-mnemonic`, {
         method: 'POST',
         headers: {
@@ -19,14 +21,10 @@ const MnemonicGenerator = () => {
         body: JSON.stringify({ input_text: input }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate mnemonic');
-      }
+      if (!response.ok) throw new Error('Failed to generate mnemonic');
 
-      // Parse the JSON response
       const data = await response.json();
 
-      // Update the generated content with the response from the backend
       if (data.mnemonic) {
         setGeneratedContent(`Generated mnemonic for: ${input}\n${data.mnemonic}`);
         setMnemonic(data.mnemonic);
@@ -37,6 +35,8 @@ const MnemonicGenerator = () => {
     } catch (error) {
       console.error('Error:', error);
       setGeneratedContent('An error occurred while generating the mnemonic. Please try again.');
+    } finally {
+      setLoading(false); // 👈 End loading
     }
   };
 
@@ -48,12 +48,10 @@ const MnemonicGenerator = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ input_text: inputText, mnemonic, user_id}),
+        body: JSON.stringify({ input_text: inputText, mnemonic, user_id }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to save mnemonic');
-      }
+      if (!response.ok) throw new Error('Failed to save mnemonic');
 
       const data = await response.json();
       alert(data.message);
@@ -78,7 +76,7 @@ const MnemonicGenerator = () => {
           regenerateHandler={handleRegenerate}
         />
       </div>
-      <InputBox onGenerate={handleGenerate} />
+      <InputBox onGenerate={handleGenerate} loading={loading} />
     </div>
   );
 };

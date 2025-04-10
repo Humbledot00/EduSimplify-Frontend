@@ -6,7 +6,7 @@ import InputBox from '../components/InputBox';
 import config from './config';
 const Summarization = () => {
   const [generatedContent, setGeneratedContent] = useState("");
-
+  const [loading, setLoading] = useState(false);
   const [summaryStats, setSummaryStats] = useState({
     originalLength: 0,
     summaryLength: 0,
@@ -19,6 +19,7 @@ const Summarization = () => {
       setGeneratedContent("Please enter some text to generate a summary.");
       return;
     }
+    setLoading(true);
 
     try {
       // Send a POST request to the backend
@@ -47,6 +48,8 @@ const Summarization = () => {
     } catch (error) {
       console.error('Error:', error);
       setGeneratedContent('**Error:** An error occurred while generating the summary. Please try again.');
+    }finally {
+      setLoading(false); // 👈 End loading
     }
   };
 
