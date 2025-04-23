@@ -7,12 +7,13 @@ const LearningPlatform = () => {
   const navigate = useNavigate();
 
   const learningOptions = [
+    { title: 'Mnemonic Magic', icon: '✨ ', path: '/keyword' },
     { title: 'Mnemonic Generation', icon: '🧠', path: '/mnemonic' },
     { title: 'Story Based Learning', icon: '📚', path: '/story' },
     { title: 'Flash Cards', icon: '🎴', path: '/flashcards' },
     { title: 'Visual Aids & Diagrams', icon: '📊', path: '/visual-aids' },
     { title: 'Summarization', icon: '📝', path: '/summarization' },
-    { title: 'Gamification', icon: '🎮', path: '/gamification' }
+    { title: 'Gamification', icon: '🎮', path: '/gamification' },
   ];
 
    const [username, setUsername] = useState(''); // State to store the username

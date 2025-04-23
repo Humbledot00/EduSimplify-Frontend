@@ -14,6 +14,7 @@ import Profile from './pages/Profile';
 import FlashcardCollections from './pages/FlashcardCollections';
 import LoginPage from './pages/LoginPage';
 import AboutUs from './pages/AboutUs';
+import KeywordMnemonicGenerator from './pages/KeywordMnemonicGenerator';
 
 const pageTransition = {
   initial: { opacity: 0, y: 20 },
@@ -52,6 +53,20 @@ const App = () => {
               </motion.div>
             } 
           />
+          <Route 
+            path="/keyword" 
+            element={
+              <motion.div
+                initial="initial"
+                animate="animate"
+                exit="exit"
+                variants={pageTransition}
+              >
+                <KeywordMnemonicGenerator />
+              </motion.div>
+            } 
+          />
+
           <Route 
             path="/story" 
             element={
