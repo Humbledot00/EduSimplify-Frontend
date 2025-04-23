@@ -29,7 +29,7 @@ const LearningPlatform = () => {
   return (
     <div className="min-h-screen bg-white">
       {/* Navigation Bar */}
-      <nav className="bg-blue-600 p-4 shadow-lg">
+      <nav className="bg-gradient-to-r from-purple-600 to-blue-500 p-4 shadow-lg">
         <div className="container mx-auto flex justify-between items-center">
           <motion.div
             initial={{ x: -50, opacity: 0 }}
